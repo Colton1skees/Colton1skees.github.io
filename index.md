@@ -105,7 +105,7 @@ end
 
 <dl>
 <dt>Name</dt>
-<dd>Godzilla</dd>
+<dd>List</dd>
 <dt>Born</dt>
 <dd>1952</dd>
 <dt>Birthplace</dt>
