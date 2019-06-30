@@ -23,9 +23,9 @@ This is a normal paragraph following a header. GitHub is a code hosting platform
 ### Header 3
 
 ```cpp
-// Javascript code with syntax highlighting.
+// CPP code with syntax highlighting.
 void Main() {
-  std::cout << "test" << std::endl;
+  std::cout << "C++ code" << std::endl;
 }
 ```
 
