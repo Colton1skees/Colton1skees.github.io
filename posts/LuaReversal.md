@@ -22,7 +22,7 @@ Once you've figured out what lua version the game uses, download the source code
 
 ### How to find luaL_loadbuffer and lua_pcall
 
-![Branching](https://i.imgur.com/wI3Dkpu.png)
+![Branching](https://i.imgur.com/Td7NSTR.png)
 If you look at the lua method "db_debug", you'll see that it calls luaL_loadbuffer and lua_pcall.
 
 ![Branching](https://i.imgur.com/C2lOgIO.png)
