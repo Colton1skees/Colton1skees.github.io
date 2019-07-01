@@ -20,15 +20,16 @@ If you click on the link above, you'll see a list of lua's C API Functions. They
 
 Once you've figured out what lua version the game uses, download the source code and open it up in a text editor. At this point you can just use strings to locate any C API function. I'm using lua version 5.1.1, but the process doesn't change much throughout versions.
 
-### How to find luaL_loadbuffer
+### How to find luaL_loadbuffer and lua_pcall
 
-One function in the lua source code, called "db_debug", calls luaL_loadbuffer.
 ![Branching](https://i.imgur.com/wI3Dkpu.png)
-Cross reference any of the strings in the method, and you should be brought here
+If you look at the lua method "db_debug", you'll see that it calls luaL_loadbuffer and lua_pcall.
+
 ![Branching](https://i.imgur.com/C2lOgIO.png)
+If you cross reference "=(debug command)" you'll be brought here
 
 ```cpp
 if ( sub_35548930(a1, &v9, strlen(&v9), "=(debug command)") || sub_35547920(a1, 0, 0, 0) )
 ```
 
-In that line alone you've found luaL_loadbuffer and lua_pcall. With those two functions alone you can execute any custom lua script(See [here](<[here](https://pgl.yoyo.org/luai/i/3.7+Functions+and+Types)>)).
+If you look at this that line, you'll see luaL_loadbuffer and lua_pcall. With those two functions alone you can execute any custom lua script(See [here](http://gouthamanbalaraman.com/blog/minimal-example-lua-function-cpp.html))
