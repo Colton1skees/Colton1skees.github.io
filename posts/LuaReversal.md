@@ -11,6 +11,24 @@ Most of this information will be targeted torwards reverse engineering game's th
 
 # Reversing Lua's C API
 
-For the rest of this tutorial I'm going to be using IDA Pro. I'm not going to explain basic lua concepts to keep the tutorial short.
+For the rest of this tutorial I'm going to be using IDA Pro. I'm not going to explain basic lua concepts because it is out of the scope of this tutorial.
 
-If you click on the link above, you'll see a list of lua's C API Functions. They are basically just functions you can call to interact/manipulate lua through C/C++. The easiest way that I've found to locate specific C API function's is to just download the lua source code and look for string references. You can find the lua version that the game uses's by searching for the string `$Lua`
+If you click on the link above, you'll see a list of lua's C API Functions. They are basically just functions you can call to interact/manipulate lua through C/C++. The easiest way that I've found to locate specific C API function's is to just download the lua source code and look for string references. You can find the lua version that the game uses's by searching for the string
+`$Lua`
+
+![Branching](https://imgur.com/a/n3N0DA0)
+
+Once you've figured out what lua version the game uses, download the source code and open it up in a text editor. At this point you can just use strings to locate any C API function. I'm using lua version 5.1.1, but the process doesn't change much throughout versions.
+
+### How to find luaL_loadbuffer
+
+One function in the lua source code, called "db_debug", calls luaL_loadbuffer.
+![Branching](https://imgur.com/a/ib7Fyzf)
+Cross reference any of the strings in the method, and you should be brought here
+![Branching](https://imgur.com/a/GawEXZW)
+
+```cpp
+if ( sub_35548930(a1, &v9, strlen(&v9), "=(debug command)") || sub_35547920(a1, 0, 0, 0) )
+```
+
+In that line alone you've found luaL_loadbuffer and lua_pcall. With those two functions alone you can execute any custom lua script(See [here](<[here](https://pgl.yoyo.org/luai/i/3.7+Functions+and+Types)>)).
