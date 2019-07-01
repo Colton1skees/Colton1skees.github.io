@@ -28,8 +28,8 @@ If you look at the lua method "db_debug", you'll see that it calls luaL_loadbuff
 If you cross reference "=(debug command)" you'll be brought here
 ![Branching](https://i.imgur.com/C2lOgIO.png)
 
+If you look at this line, you'll see luaL_loadbuffer and lua_pcall. With those two functions alone you can execute any custom lua script(see [here](http://gouthamanbalaraman.com/blog/minimal-example-lua-function-cpp.html))
+
 ```cpp
 if ( sub_35548930(a1, &v9, strlen(&v9), "=(debug command)") || sub_35547920(a1, 0, 0, 0) )
 ```
-
-If you look at this line, you'll see luaL_loadbuffer and lua_pcall. With those two functions alone you can execute any custom lua script(see [here](http://gouthamanbalaraman.com/blog/minimal-example-lua-function-cpp.html)))
