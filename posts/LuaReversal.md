@@ -22,14 +22,14 @@ Once you've figured out what lua version the game uses, download the source code
 
 ### How to find luaL_loadbuffer and lua_pcall
 
-![Branching](https://i.imgur.com/Td7NSTR.png)
 If you look at the lua method "db_debug", you'll see that it calls luaL_loadbuffer and lua_pcall.
+![Branching](https://i.imgur.com/Td7NSTR.png)
 
-![Branching](https://i.imgur.com/C2lOgIO.png)
 If you cross reference "=(debug command)" you'll be brought here
+![Branching](https://i.imgur.com/C2lOgIO.png)
 
 ```cpp
 if ( sub_35548930(a1, &v9, strlen(&v9), "=(debug command)") || sub_35547920(a1, 0, 0, 0) )
 ```
 
-If you look at this that line, you'll see luaL_loadbuffer and lua_pcall. With those two functions alone you can execute any custom lua script(See [here](http://gouthamanbalaraman.com/blog/minimal-example-lua-function-cpp.html))
+If you look at this line, you'll see luaL_loadbuffer and lua_pcall. With those two functions alone you can execute any custom lua script(see [here](http://gouthamanbalaraman.com/blog/minimal-example-lua-function-cpp.html)))
