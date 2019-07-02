@@ -20,7 +20,7 @@ Once you've figured out what Lua version the program uses, download the source c
 
 ### How to find luaL_loadbuffer and lua_pcall
 
-If you look at the Lua method "db_debug", you'll see that it calls luaL_loadbuffer and lua_pcall.
+If you open up the lua source code and look at the Lua method "db_debug", you'll see that it calls luaL_loadbuffer and lua_pcall.
 ![Branching](https://i.imgur.com/Td7NSTR.png)
 
 Open up a disassembler and cross reference "=(debug command)". You should get 1 result, which will bring you inside of db_debug.
