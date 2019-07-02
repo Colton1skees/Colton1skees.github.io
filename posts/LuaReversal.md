@@ -66,7 +66,7 @@ int __cdecl Hooked_LoadBuffer(int* lua_State, const char* buff, size_t sz, const
 
 Adding this code to your luaL_loadbuffer hooks allows you to dump Lua scripts. However, there is a problem with the method above. luaL_loadbufffer supports passing a file buffer OR plain Lua text in the buff parameter. You will likely crash if you try to create a file with plain text passed in the buff parameter. I haven't ran into this issue yet, so I can't provide a definitive solution.
 
-One solution could be to check the size of the buffer with strlen. If the script is compiled it should have a length of 5 and the text "LuaQ" when converted to a string.
+One solution could be to check the size of the buffer with strlen. If the script is compiled it should have a length of 5 and the text "LuaQ" when the buffer is converted to a string.
 
 ```cpp
 if(strlen(buff) == 5 && strcmp(buff, "LuaQ") == 0)
@@ -160,3 +160,51 @@ int __cdecl Hooked_LuaPCall(int* lua_State, int nargs, int nresults, int errFunc
 # Closing Thoughts
 
 The Lua API is generally pretty easy to reverse. Alot of programs that embed Lua implement a large portion of their functionality in Lua(even going as far as making C/C++ functions callable through lua). Whether or not reversing the lua API is worth it depends on what functionality they implement in lua, and what functionality you are looking for.
+
+Here are my signatures for some of lua's C API functions(version 5.1.1):
+
+```cpp
+PBYTE sigGettop = (PBYTE)"\x55\x8B\xEC\x8B\x4D\x08\x8B\x41\x08\x2B\x41\x0C";
+char* maskGettop = "xxxxxxxxxxxx";
+
+PBYTE sigGetfield = (PBYTE)"\x55\x8B\xEC\x8B\x4D\x0C\x83\xEC\x08\x53\x56\x8B\x75\x08\x57\x8B\xD6\xE8\x00\x00\x00\x00\x8B\x55\x10\x8B\xF8\x8B\xC2\x8D\x58\x01\x8A\x08\x40\x84\xC9\x75\xF9\x2B\xC3\x50\x52\x56\xE8\x00\x00\x00\x00\x89\x45\xF8\x8B\x46\x08\x50";
+char* maskGetfield = "xxxxxxxxxxxxxxxxxx????xxxxxxxxxxxxxxxxxxxxxxx????xxxxxxx";
+
+PBYTE sigPushnumber = (PBYTE)"\x55\x8B\xEC\x8B\x45\x08\x8B\x48\x08\xF3\x0F\x10\x45";
+char* maskPushnumber = "xxxxxxxxxxxxx";
+
+PBYTE sigPcall = (PBYTE)"\x55\x8B\xEC\x8B\x4D\x14\x83\xEC\x08";
+char* maskPcall = "xxxxxxxxx";
+
+PBYTE sigPushstring = (PBYTE)"\x55\x8B\xEC\x8B\x45\x0C\x85\xC0";
+char* maskPushstring = "xxxxxxxx";
+
+PBYTE sigPushboolean = (PBYTE)"\x55\x8B\xEC\x8B\x45\x08\x8B\x48\x08\x33\xD2";
+char* maskPushboolean = "xxxxxxxxxxx";
+
+PBYTE sigLoadbuffer = (PBYTE)"\x55\x8B\xEC\x83\xEC\x08\x8B\x45\x0C\x8B\x55\x14";
+char* maskLoadbuffer = "xxxxxxxxxxxx";
+
+PBYTE sigLuatype = (PBYTE)"\x55\x8B\xEC\x8B\x4D\x0C\x8B\x55\x08\xE8\x00\x00\x00\x00\x3D\x00\x00\x00\x00\x75\x05";
+char* maskLuatype = "xxxxxxxxxx????x????xx";
+
+PBYTE sigTonumber = (PBYTE)"\x55\x8B\xEC\x8B\x4D\x0C\x8B\x55\x08\x83\xEC\x08\xE8\x00\x00\x00\x00\x83\x78\x04\x03\x74\x17";
+char* maskTonumber = "xxxxxxxxxxxxx????xxxxxx";
+
+PBYTE sigPushnil = (PBYTE)"\x55\x8B\xEC\x8B\x45\x08\x8B\x48\x08\xC7\x41";
+char* maskPushnil = "xxxxxxxxxxx";
+
+PBYTE sigPushvalue = (PBYTE)"\x55\x8B\xEC\x8B\x4D\x0C\x56\x8B\x75\x08\x8B\xD6\xE8\x00\x00\x00\x00\x8B\x4E\x08\x8B\x10\x89\x11";
+char* maskPushvalue = "xxxxxxxxxxxxx????xxxxxxx";
+
+PBYTE sigNext = (PBYTE)"\x55\x8B\xEC\x8B\x4D\x0C\x56\x8B\x75\x08\x8B\xD6\xE8\x00\x00\x00\x00\x8B\x4E\x08\x8B\x10\x83\xE9\x08\x51\x52\x56";
+char* maskNext = "xxxxxxxxxxxxx????xxxxxxxxxxx";
+
+PBYTE sigSettop = (PBYTE)"\x55\x8B\xEC\x8B\x4D\x0C\x8B\x45\x08";
+char* maskSettop = "xxxxxxxxx";
+
+PBYTE sigToString = (PBYTE)"\x55\x8B\xEC\x56\x8B\x75\x08\x57\x8B\x7D\x0C\x8B\xCF";
+char* maskToString = "xxxxxxxxxxxxx";
+```
+
+The signatures should work for other versions of lua, but they could break in older/newer versions of lua.
