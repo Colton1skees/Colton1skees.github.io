@@ -76,6 +76,8 @@ Adding that check to your hook should work, but it might not work in every case.
 
 Another thing to note is that some programs pass the files name(if applicable) in the description parameter, so you might be able to assign files their real name.
 
+If you successfully dump a program's Lua files and notice they look like garbage in a text editor, then it usually means the lua scripts are compiled. You can use a tool called unluac to decompile those scripts and retrieve the source code if that is the case.
+
 ### Modifying/Replacing Lua scripts in memory
 
 If you a script gets loaded from a file in luaL_loadbuffer, then you can just swap the buffer and size in your hook.
@@ -110,11 +112,11 @@ When I first started reversing apps that use Lua, I always had an issue with ran
 
 Multi-threading is relevant to Lua because it is a stack based language. Here's an example issue you might run into if threading is a problem:
 
-Imagine you're trying to call a method, so you push a parameter on the stack. If the program is multithreaded and you're not making the API calls in the Lua thread, then there's a chance that something else could get pushed onto the stack before you can call the method that uses the parameter. This would corrupt the stack causing the program to crash.
+Imagine you're trying to call a method, so you push a parameter on the stack. If the program is multithreaded and you're not making the API calls in the Lua thread, then there's a chance that another thread could push something else onto the stack before you can call the method that uses the parameter. This would corrupt the stack causing the program to crash.
 
 When I ran into this problem, I remember reading some post saying that I had to "find the program's internal Lua locking mechanisms". In my experience, I've never actually had to do that.
 
-The solution is simple: hook any Lua API function that gets executed often, and execute whatever API function's you want in your hook. Generally I use lua_pcall. Some programs don't use lua_pcall though, so you may have to hook a different method(such as lua_gettop).
+The solution is simple: hook any Lua API function that gets executed often, and execute whatever API function's you want in your hook. Generally I hook lua_pcall. Some programs don't use lua_pcall though, so you may have to hook a different method(such as lua_gettop).
 
 The only other issue is figuring out which Lua state to use. If a program uses multiple Lua states then you have to figure out which one you want to use. If there is a specific Lua state you need to use, then you just have to find a global value specific to that state.
 Here is an example of executing your own Lua code in a hooked function.
@@ -148,4 +150,13 @@ int __cdecl Hooked_LuaPCall(int* lua_State, int nargs, int nresults, int errFunc
 }
 ```
 
-If you aren't targetting a specific Lua State, then you can just remove the code in relation to setting the target lua state. However, you have to make sure you're executing all the API functions on the same Lua State. Assuming it doesn't matter which Lua State you use, I reccomend creating a global variable to store whichever lua state you use(which you can just choose randomly in your hook) and executing all API function's in that lua state.
+##### Things to note
+
+1. The variable bExecuteCustomLuaCode gives you control of when you want to execute code. The variable can be removed so long as you have proper control flow to determine when you want to execute custom lua code.
+2. Because sleep() cannot be used in your hook(unless you want to block the entire thread that lua is executing in), I recommend using the clock_t class. The clock_t class allows you to easily keep track of time between function calls, and can be used for some very hacky solutions.
+3. If you aren't targetting a specific Lua State, then you can just remove the code in relation to setting the target lua state. However, you have to make sure you're executing all the API functions on the same Lua State. Assuming it doesn't matter which Lua State you use, I reccomend creating a global variable to store whichever lua state you use(which you can just choose randomly in your hook) and executing all API function's in that lua state.
+4. Additionally, if the program you're reversing only has one lua state, then you can just remove all the code relating to using a specific lua state. Sadly that's not the case in all programs, so its just a matter of luck.
+
+# Closing Thoughts
+
+The Lua API is generally pretty easy to reverse. Alot of programs that embed Lua implement a large portion of their functionality in Lua(even going as far as making C/C++ functions callable through lua). Whether or not reversing the lua API is worth it depends on what functionality they implement in lua, and what functionality you are looking for.
