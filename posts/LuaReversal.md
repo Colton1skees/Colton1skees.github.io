@@ -25,7 +25,7 @@ If you look at the lua method "db_debug", you'll see that it calls luaL_loadbuff
 
 Open up a disassembler and cross reference "=(debug command)". You should get 1 result, which will bring you inside of db_debug.
 ![Branching](https://i.imgur.com/C2lOgIO.png)
-<img src="https://i.imgur.com/C2lOgIO.png" alt="Smiley face" style="width: 50%; height: 300px;">
+<img src="https://i.imgur.com/C2lOgIO.png" alt="Smiley face" style="width: 200%; height: 300px;">
 
 If you look at this line, you'll see luaL_loadbuffer and lua_pcall being called. With those two functions alone you can execute any custom lua script(see [here](http://gouthamanbalaraman.com/blog/minimal-example-lua-function-cpp.html))
 
