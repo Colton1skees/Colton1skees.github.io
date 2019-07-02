@@ -18,15 +18,15 @@ If you click on the link above in the Lua section, you'll see a list of Lua's C 
 
 Once you've figured out what Lua version the program uses, download the source code and open it up in a text editor. At this point you can just use strings to locate any C API function. I'm using Lua version 5.1.1, but the process doesn't change much throughout versions.
 
-### How to find LuaL_loadbuffer and lua_pcall
+### How to find luaL_loadbuffer and lua_pcall
 
-If you look at the Lua method "db_debug", you'll see that it calls LuaL_loadbuffer and lua_pcall.
+If you look at the Lua method "db_debug", you'll see that it calls luaL_loadbuffer and lua_pcall.
 ![Branching](https://i.imgur.com/Td7NSTR.png)
 
 Open up a disassembler and cross reference "=(debug command)". You should get 1 result, which will bring you inside of db_debug.
 ![Branching](https://i.imgur.com/C2lOgIO.png)
 
-If you look at this line, you'll see LuaL_loadbuffer and lua_pcall being called. With those two functions alone you can execute any custom Lua script(see [here](http://gouthamanbalaraman.com/blog/minimal-example-lua-function-cpp.html))
+If you look at this line, you'll see luaL_loadbuffer and lua_pcall being called. With those two functions alone you can execute any custom Lua script(see [here](http://gouthamanbalaraman.com/blog/minimal-example-lua-function-cpp.html))
 
 ```cpp
 if ( sub_35548930(a1, &v9, strlen(&v9), "=(debug command)") || sub_35547920(a1, 0, 0, 0) )
@@ -38,15 +38,15 @@ I'm not going to cover finding any more lua API functions because the process is
 
 ### Dumping Lua Scripts
 
-I'm not entirely sure if there are other ways to load Lua scripts, but in every program I've seen, Lua scripts are loaded through LuaL_loadbuffer. You can dump Lua scripts by hooking LuaL_loadbuffer and logging scripts to a file.
+I'm not entirely sure if there are other ways to load Lua scripts, but in every program I've seen, Lua scripts are loaded through luaL_loadbuffer. You can dump Lua scripts by hooking luaL_loadbuffer and writing scripts to a file.
 
-The typedef for LuaL_loadbuffer is
+The typedef for luaL_loadbuffer is
 
 ```cpp
 typedef int(__cdecl* tlua_loadbuffer)(int* lua_State, const char* buff, size_t sz, const char* name);
 ```
 
-I'm not going to provide any code for hooking LuaL_loadbuffer(because it depends on which library you use), but I will provide some code for dumping Lua scripts.
+I'm not going to provide any code for hooking luaL_loadbuffer(because it depends on which library you use), but I will provide some code for dumping Lua scripts.
 
 Note that I use int* in place of lua_State* because I personally have no need to reverse lua_State.
 
@@ -64,7 +64,7 @@ int __cdecl Hooked_LoadBuffer(int* lua_State, const char* buff, size_t sz, const
 }
 ```
 
-Adding this code to your LuaL_loadbuffer hooks allows you to dump Lua scripts. However, there is a problem with that method above. LuaL_loadbufffer supports passing a file buffer OR plain Lua text in the buff parameter. You will likely crash if you try to create a file with plain text passed in the buff parameter. I haven't ran into this issue yet, so I can't provide a definitive solution.
+Adding this code to your luaL_loadbuffer hooks allows you to dump Lua scripts. However, there is a problem with the method above. luaL_loadbufffer supports passing a file buffer OR plain Lua text in the buff parameter. You will likely crash if you try to create a file with plain text passed in the buff parameter. I haven't ran into this issue yet, so I can't provide a definitive solution.
 
 One solution could be to check the size of the buffer with strlen. If the script is compiled it should have a length of 5 and the text "LuaQ" when converted to a string.
 
@@ -78,7 +78,7 @@ Another thing to note is that some programs pass the files name(if applicable) i
 
 ### Modifying/Replacing Lua scripts in memory
 
-If you a script gets loaded from a file in LuaL_loadbuffer, then you can just swap the buffer and size in your hook.
+If you a script gets loaded from a file in luaL_loadbuffer, then you can just swap the buffer and size in your hook.
 
 ```cpp
 int __cdecl Hooked_LoadBuffer(int* lua_State, const char* buff, size_t sz, const char* description)
