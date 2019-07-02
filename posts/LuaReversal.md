@@ -106,7 +106,7 @@ If the script is not being loaded from a file, then you'd likely have to do some
 
 Assuming you've found whatever API function's you want to use, the biggest issue to tackle is dealing with multithreading/Lua states. If you're not familiar with what a Lua state is then see [here](https://stackoverflow.com/a/4201531)
 
-When I first started reversing apps that use Lua, I always had an issue of random crashes when trying to execute API functions. In my case, the issue was that the program I was reversing had multiple Lua states, and was multi-threaded.
+When I first started reversing apps that use Lua, I always had an issue with random crashes when trying to execute API functions. In my case, the issue was that the program I was reversing had multiple Lua states, and was multi-threaded.
 
 Multi-threading is relevant to Lua because it is a stack based language. Here's an example issue you might run into if threading is a problem:
 
@@ -114,10 +114,10 @@ Imagine you're trying to call a method, so you push a parameter on the stack. If
 
 When I ran into this problem, I remember reading some post saying that I had to "find the program's internal Lua locking mechanisms". In my experience, I've never actually had to do that.
 
-The solution is simple: hook any Lua API function that gets executed often, and execute whatever API function's you want in your hook. Generally I use lua_pcall. Some programs don't use lua_pcall, so you may have to hook a different method(such as lua_gettop).
+The solution is simple: hook any Lua API function that gets executed often, and execute whatever API function's you want in your hook. Generally I use lua_pcall. Some programs don't use lua_pcall though, so you may have to hook a different method(such as lua_gettop).
 
 The only other issue is figuring out which Lua state to use. If a program uses multiple Lua states then you have to figure out which one you want to use. If there is a specific Lua state you need to use, then you just have to find a global value specific to that state.
-Here is an example of executing your own Lua code.
+Here is an example of executing your own Lua code in a hooked function.
 
 ```cpp
 bool bExecuteCustomLuaCode = false;
