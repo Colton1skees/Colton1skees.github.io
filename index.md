@@ -2,6 +2,4 @@
 layout: default
 ---
 
-Text can be **bold**, _italic_, or ~~strikethrough~~.
-
-[Link to another page(lua)](./posts/LuaReversal.md).
+[Reverse engineering applications that use lua](./posts/LuaReversal.md).
