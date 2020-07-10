@@ -16,6 +16,7 @@ For this writeup, I am focusing solely on the mutation.
 ## Analyzing the obfuscation
 
 Here's an example of the obfuscation:
+
 ![image](/assets/images/mutation.png)
 
 Right away, the following marked instructions stood out as junk:
@@ -38,7 +39,7 @@ Right away, the following marked instructions stood out as junk:
     jle     loc_FFFFF80584C8F35C
 ```
 
-Once I saw how simple the mutation was, it became a matter of creating an algorithm to identify mutation.
+The mutation follows a pretty obvious pattern. They will only insert junk instructions when they know the result will be overwritten. Once I saw how simple the mutation was, it became a matter of creating an algorithm to identify mutation.
 
 ## Considerations
 
@@ -53,7 +54,7 @@ None of the existing binary analysis frameworks seemed like the best option, so 
 
 ## Getting Started
 
-Once I implemented disassembly and CFG recovery, I was finally able to start working on removing the mutation. It was surprisingly more difficult than I thought. My first attempt went like this:
+Once I got my initial tooling setup, I was finally able to start working on removing the mutation. It was surprisingly more difficult than I thought. My first attempt went like this:
 
 1. Grab a basic block
 2. Iterate through every instruction in the basic block, and retrieve the index of the first instruction who wrote to the result, along with the first instruction who read the result. (result is referring to any of the registers written to by a given instruction)
@@ -284,13 +285,49 @@ Finally, I analyze the dependency graph and remove mutation(this function is pre
     }
 ```
 
-That's really all there is. As of right now I can't post the entire source of my tool because I'm using it for analyzing some commercial applications, but I may post a cleaned up version at some point. Here are a bunch of my [helper methods](https://pastebin.com/F80yR8WD) which should make the code alot easier to understand.
+That's really all there is. As of right now I can't post the entire source of my tool because I'm using it for analyzing a commercial application, but I may post a cleaned up version at some point. Here are a bunch of my [helper methods](https://pastebin.com/F80yR8WD) which should make the code alot easier to understand.
+
+Some of the libraries I used include:
+
+- [ICED](https://github.com/0xd4d/iced)
+- [Rivers](https://github.com/Washi1337/Rivers)
+- [AsmResolver](https://github.com/Washi1337/AsmResolver)
 
 ## Output
 
-[Obfuscated Output](https://pastebin.com/g44XhBKU)
+```nasm
+    rol     r9w, 9 // JUNK
+    mov     [rsp+arg_8], rbx
+    add     r9w, 0AE93h // JUNK
+    ror     r9w, cl // JUNK
+    mov     [rsp+arg_10], rbp
+    inc     r9d // JUNK
+    mov     [rsp+arg_18], rsi
+    bt      bx, 0Dh // most likely junk, but no guarantees can be made without analyzing other blocks
+    sal     r9w, cl // JUNK
+    mov     r9, cs:qword_FFFFF80584BBBA00
+    test    esi, 84596310h // JUNK
+    stc  // JUNK
+    mov     r8b, 1
+    cmp     dx, 0F618h
+    jle     loc_FFFFF80584C8F35C
+```
 
-[Deobfuscated Output](https://pastebin.com/D0s4rZQi)
+The obfuscated basic block turns into:
+
+```nasm
+    mov [rsp+10h],rbx
+    mov [rsp+18h],rbp
+    mov [rsp+20h],rsi
+    mov r9,[0FFFFF80584BBBA00h]
+    mov r8b,1
+    cmp dx,0F618h
+    jle near ptr 0FFFFF80584C8F35Ch
+```
+
+[Full Obfuscated Function Output](https://pastebin.com/g44XhBKU)
+
+[Full Deobfuscated Function Output](https://pastebin.com/D0s4rZQi)
 
 Also note there may be some messed up conditional jumps in the deobfuscated output. There is a flaw somewhere in my optimizer which fails to replace a fake conditional jump with an unconditional jump. Aside from that, I haven't found anything wrong with the output.
 
