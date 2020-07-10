@@ -130,7 +130,7 @@ Before I get to the code, I want to manually explain the logic that my tool uses
 - 5: `mov r9,[0FFFFF80584BBBA00h]`- This instruction writes to r9 and nothing overwrites it, so we assume it is good.
 - 6: `sal r9w,cl` - Writes to r9, which then gets overwritten before it is read - DISCARDED
 - 9: `inc r9d` - Writes to r9, which is overwritten before it is read(keep in mind that we discarded instruction #6, so we can guarantee that it is overwritten before it is read) - DISCARDED
-- 12: `add r9w,0AE93h`{% endihighlight %}``` - Same as #9. Result is overwritten before it is read - DISCARDED
+- 12: `add r9w,0AE93h` Same as #9. Result is overwritten before it is read - DISCARDED
 - 14: `rol r9w,9` - Same as #9. Result is overwritten before it is read - DISCARDED
 
 You're probably wondering about register sizes at this point. Luckily, the obfuscator I dealt with doesn't seem to care about register sizes. When I see a junk write to the lower bits of an instruction, I can safely assume that the entire register is irrelevant until it is overwritten with something valid. My solution was to just convert each register to its highest form(i.e R9W becomes just R9). This does leave a small potential for incorrect optimizations, but it worked fine in my case. It should be relatively simple to handle register aliasing.
