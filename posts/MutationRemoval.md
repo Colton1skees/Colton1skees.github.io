@@ -3,7 +3,7 @@ layout: default
 title: "Removing x86 Mutation"
 ---
 
-# Background
+## Background
 
 I recently started reversing a driver which makes heavy use of a certain unnamed commercial protector. One of the most frequently used features of that protector is mutation. Mutation basically inserts random garbage instructions between meaningful instructions, which makes analysis significantly harder. The functions I analyzed seemed to have some additional protections applied, which includes:
 
@@ -13,10 +13,10 @@ I recently started reversing a driver which makes heavy use of a certain unnamed
 
 For this writeup, I am focusing solely on the mutation.
 
-# Analyzing the obfuscation
+## Analyzing the obfuscation
 
 Here's an example of the obfuscation:
-![Branching](https://imgur.com/a/locDGNx)
+![Branching](https://imgur.com/a/locDGNx.png)
 
 Right away, the following marked instructions stood out as junk:
 
@@ -40,7 +40,7 @@ Right away, the following marked instructions stood out as junk:
 
 Once I saw how simple the mutation was, it became a matter of creating an algorithm to identify mutation.
 
-# Considerations
+## Considerations
 
 Before I started writing my own solution, I looked into existing solutions & tooling. I was only able to find one existing writeup detailing mutation removal, which I highly reccomend reading [here](https://www.usualsuspect.re/article/automatic-removal-of-junk-instructions-through-state-tracking). The author of the linked writeup used Triton, which didn't feel like the right option in my case. In hindsight, I probably should've used Triton(or another existing binary analysis framework), but there were some caveats:
 
@@ -51,7 +51,7 @@ Before I started writing my own solution, I looked into existing solutions & too
 
 None of the existing binary analysis frameworks seemed like the best option, so I just decided to reinvent the wheel and write my own.
 
-# Getting Started
+## Getting Started
 
 Once I implemented disassembly and CFG recovery, I was finally able to start working on removing the mutation. It was surprisingly more difficult than I thought. My first attempt went like this:
 
@@ -117,11 +117,11 @@ After some more thinking, I decided to try implementing a sortof dependency grap
 
 The output isn't the most intuitive, so I will try to explain. The numbers followed by "Reads:" are the indexes of the instructions which read the result of that instruction. The numbers followed by "Writes:" are the indexes of the instructions which write to the result of that instruction. Before I get to the code, I want to manually explain the logic that I used to identify junk instructions.
 
-- 5: mov r9,[0FFFFF80584BBBA00h] - Writes to r9, and has 0 instructions that read/write the result. Because of this, we can assume that it is a good instruction - KEPT
-- 6: sal r9w,cl - Writes to r9, which is overwritten before it is read - DISCARDED
-- 9: inc r9d - Writes to r9, which is overwritten before it is read(keep in mind that we discarded instruction #6, so we can guarantee that it is overwritten before it is read) - DISCARDED
-- 12: add r9w,0AE93h - Same as #9. Result is overwritten before it is read - DISCARDED
-- 14: rol r9w,9 - Same as #9. Result is overwritten before it is read - DISCARDED
+- `5: mov r9,[0FFFFF80584BBBA00h]` - Writes to r9, and has 0 instructions that read/write the result. Because of this, we can assume that it is a good instruction - KEPT
+- `6: sal r9w,cl` - Writes to r9, which is overwritten before it is read - DISCARDED
+- `9: inc r9d` - Writes to r9, which is overwritten before it is read(keep in mind that we discarded instruction #6, so we can guarantee that it is overwritten before it is read) - DISCARDED
+- `12: add r9w,0AE93h` - Same as #9. Result is overwritten before it is read - DISCARDED
+- `14: rol r9w,9` - Same as #9. Result is overwritten before it is read - DISCARDED
 
 You're probably wondering about register sizes at this point. In my case, I was able to get away with just converting each register to it's highest form(i.e r9w just gets converted to r9).
 
@@ -130,11 +130,11 @@ You're also probably wondering about those junk eflags writes. I'm not covering 
 1. Identify all instructions whose sole purpose is to modify eflags(stc, cmp, clc, cmc, ect)
 2. Remove the instruction if the containing block's exit instruction does not read it
 
-# Implementing the algorithm
+## Implementing the algorithm
 
 First I needed a structure to store the dependency graph:
 
-```C#
+```csharp
     public class InstructionDependency
     {
         /// <summary>
@@ -159,7 +159,7 @@ First I needed a structure to store the dependency graph:
 
 Then I build the dependency graph:
 
-```C#
+```csharp
     /// <summary>
     /// Builds a dependency graph for a basic block
     /// </summary>
@@ -211,7 +211,7 @@ Then I build the dependency graph:
 
 Finally, I analyze the dependency graph and remove mutation(this function is pretty lengthy):
 
-```C#
+```csharp
     public void RemoveBlockMutations(Node node)
     {
         // Retrieve the dependency graph and reverse it so that we can iterate backwards
@@ -286,13 +286,14 @@ Finally, I analyze the dependency graph and remove mutation(this function is pre
 
 That's really all there is. As of right now I can't post the entire source of my tool because I'm using it for analyzing some commercial applications, but I may post a cleaned up version at some point. Here are a bunch of my helper methods which should make the code alot easier to understand - https://pastebin.com/F80yR8WD.
 
-# Output
+## Output
 
-Obfuscated - https://pastebin.com/g44XhBKU
-Deobfuscated - https://pastebin.com/D0s4rZQi
+[Obfuscated Output](https://pastebin.com/g44XhBKU)
+
+[Deobfuscated Output](https://pastebin.com/D0s4rZQi)
 
 Also note there may be some messed up conditional jumps in the deobfuscated output. There is a flaw somewhere in my optimizer which fails to replace a fake conditional jump with an unconditional jump. Aside from that, I haven't found anything wrong with the output.
 
-# Conclusions
+## Conclusions
 
 My deobfuscator isn't perfect. I didn't really care about performance(I see the 1000 performance issues but I will get to that at a later point). Performance aside, I'm happy with the result. So far I haven't been able to find any cases where I optimized out a valid instruction. Any suggestions/criticisms are welcome!
