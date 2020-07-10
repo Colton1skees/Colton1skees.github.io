@@ -127,7 +127,7 @@ The output isn't the most intuitive, so I will try to explain. The numbers follo
 
 Before I get to the code, I want to manually explain the logic that my tool uses:
 
-- 5: `ihighlight nasm %}mov r9,[0FFFFF80584BBBA00h]`- This instruction writes to r9 and nothing overwrites it, so we assume it is good.
+- 5: `mov r9,[0FFFFF80584BBBA00h]`- This instruction writes to r9 and nothing overwrites it, so we assume it is good.
 - 6: `sal r9w,cl` - Writes to r9, which then gets overwritten before it is read - DISCARDED
 - 9: `inc r9d` - Writes to r9, which is overwritten before it is read(keep in mind that we discarded instruction #6, so we can guarantee that it is overwritten before it is read) - DISCARDED
 - 12: `add r9w,0AE93h`{% endihighlight %}``` - Same as #9. Result is overwritten before it is read - DISCARDED
