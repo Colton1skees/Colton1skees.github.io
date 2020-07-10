@@ -5,7 +5,7 @@ title: "Removing x86 Mutation"
 
 ## Background
 
-I recently started reversing a driver which makes heavy use of a certain unnamed commercial protector. One of the most frequently used features of that protector is mutation. Mutation basically inserts random garbage instructions between meaningful instructions, which makes analysis significantly harder. The functions I analyzed seemed to have some additional protections applied, which includes:
+I recently started reversing a driver which makes heavy use of a certain commercial protector. One of the most frequently used features of that protector is mutation. Mutation basically inserts random garbage instructions between meaningful instructions, which makes analysis significantly harder. The functions I analyzed seemed to have some additional protections applied, which includes:
 
 - Extended basic blocks
 - Duplicated blocks
@@ -43,12 +43,12 @@ The mutation follows a pretty obvious pattern. They will only insert junk instru
 
 ## Considerations
 
-Before I started writing my own solution, I looked into existing solutions & tooling. I was only able to find one existing writeup detailing mutation removal, which I highly reccomend reading [here](https://www.usualsuspect.re/article/automatic-removal-of-junk-instructions-through-state-tracking). The author of the linked writeup used Triton, which didn't feel like the right option in my case. In hindsight, I probably should've used Triton(or another existing binary analysis framework), but there were some caveats:
+Before I started writing my own solution, I looked into existing solutions & tooling. I was only able to find one existing writeup detailing mutation removal, which I highly recomend reading [here](https://www.usualsuspect.re/article/automatic-removal-of-junk-instructions-through-state-tracking). The author of the writeup used Triton, which at the time didn't feel like the right option in my case. I chose not to use Triton or an existing BAF for a few reasons:
 
-- I had no use for alot of Triton's more advanced features in this case
-- I wasn't really sure how handling some of the other obfuscation I ran into would go with Triton
-- I felt like writing my own tool would offer more flexibility
-- I planned to use this tool for some additional uses that I will elaborate on at some point
+- I had no use for a lot of Triton's more advanced features in this case
+- I wasn't sure how handling some of the other obfuscation I ran into would go with Triton
+- Writing my own tool would offer more flexibility
+- I planned to use this tool for some things that Triton may not be suitable for
 
 None of the existing binary analysis frameworks seemed like the best option, so I just decided to reinvent the wheel and write my own.
 
@@ -91,13 +91,20 @@ If you determine instruction validity based off whether or not the result is rea
     jle     loc_FFFFF80584C8F35C
 ```
 
-When a human reads this, they instantly know that the first few instructions which write to R9 are junk. The process most of us go through to identify junk can sortof be broken down into this:
+When a human reads this, they instantly know that the first few instructions which write to R9 are junk. The process most of us go through to identify junk can sort of be broken down into the following steps:
 
 - Look at all read/writes to R9
 - Find the last write to R9
 - Trace backwards from that last write and check if R9 is actually used before it is overwritten.
 
-After some more thinking, I decided to try implementing a sortof dependency graph which keeps track of which instructions depend on each other. Here is the result of the dependency graph(**Note: I reversed the order of the dependency graph to make analysis easier**):
+After some discussions and more thinking, I decided to try building a dependency graph for analysis. The purpose of the graph was to store information about which instructions depend on each other. The dependency graph graph stored four pieces of information for each instruction:
+
+- A dictionary of the indexes of instructions which read it's result
+- A dictionary of the indexes of instructions which overwrote or modified it's result
+- A dictionary of the indexes of instructions which read it's written flags
+- A dictionary of the indexes of instructions which write to it's written flags
+
+The idea was that a dependency graph would provide all of the information that I needed to programmatically identify junk instructions. Here is a text representation of the dependency graph(**Note: In order to make analysis easier, I reverse the order the dependency graph so I can iterate backwards **):
 
 ```nasm
 0: jle near ptr 0FFFFF80584C8F35Ch - Read - Write
@@ -116,24 +123,26 @@ After some more thinking, I decided to try implementing a sortof dependency grap
 14: rol r9w,9 - Reads: 12 : 11 : 9 : 6 - Writes: 12 : 11 : 9 : 6 : 5
 ```
 
-The output isn't the most intuitive, so I will try to explain. The numbers followed by "Reads:" are the indexes of the instructions which read the result of that instruction. The numbers followed by "Writes:" are the indexes of the instructions which write to the result of that instruction. Before I get to the code, I want to manually explain the logic that I used to identify junk instructions.
+The output isn't the most intuitive, so I will try to explain. The numbers followed by "Reads:" are the indexes of the instructions which read the result of that instruction. The numbers followed by "Writes:" are the indexes of the instructions which write to the result of that instruction. I didn't bother including eflags dependencies in this example, because I describe a simpler eflags solution later on.
 
-- `5: mov r9,[0FFFFF80584BBBA00h]` - Writes to r9, and has 0 instructions that read/write the result. Because of this, we can assume that it is a good instruction - KEPT
-- `6: sal r9w,cl` - Writes to r9, which is overwritten before it is read - DISCARDED
-- `9: inc r9d` - Writes to r9, which is overwritten before it is read(keep in mind that we discarded instruction #6, so we can guarantee that it is overwritten before it is read) - DISCARDED
-- `12: add r9w,0AE93h` - Same as #9. Result is overwritten before it is read - DISCARDED
-- `14: rol r9w,9` - Same as #9. Result is overwritten before it is read - DISCARDED
+Before I get to the code, I want to manually explain the logic that my tool uses:
 
-You're probably wondering about register sizes at this point. In my case, I was able to get away with just converting each register to it's highest form(i.e r9w just gets converted to r9).
+- 5: {% ihighlight nasm %}mov r9,[0FFFFF80584BBBA00h]{% endihighlight %} - This instruction writes to r9 and nothing overwrites it, so we assume it is good.
+- 6: {% ihighlight nasm %}sal r9w,cl{% endihighlight %} - Writes to r9, which then gets overwritten before it is read - DISCARDED
+- 9: {% ihighlight nasm %}inc r9d{% endihighlight %} - Writes to r9, which is overwritten before it is read(keep in mind that we discarded instruction #6, so we can guarantee that it is overwritten before it is read) - DISCARDED
+- 12: {% ihighlight nasm %}add r9w,0AE93h{% endihighlight %} - Same as #9. Result is overwritten before it is read - DISCARDED
+- 14: {% ihighlight nasm %}rol r9w,9{% endihighlight %} - Same as #9. Result is overwritten before it is read - DISCARDED
 
-You're also probably wondering about those junk eflags writes. I'm not covering those indepth because the solution isn't really complicated. There are better ways to do it, but my algo looks like this:
+You're probably wondering about register sizes at this point. Luckily, the obfuscator I dealt with doesn't seem to care about register sizes. When I see a junk write to the lower bits of an instruction, I can safely assume that the entire register is irrelevant until it is overwritten with something valid. My solution was to just convert each register to its highest form(i.e R9W becomes just R9). This does leave a small potential for incorrect optimizations, but it worked fine in my case. It should be relatively simple to handle register aliasing.
+
+You're also probably wondering about those junk eflags writes. I'm not covering those indepth because the solution isn't complicated. There are better ways to do it, but my algo looks like this:
 
 1. Identify all instructions whose sole purpose is to modify eflags(stc, cmp, clc, cmc, ect)
 2. Remove the instruction if the containing block's exit instruction does not read it
 
 ## Implementing the algorithm
 
-First I needed a structure to store the dependency graph:
+First, I needed a structure to store the dependency graph:
 
 ```csharp
     public class InstructionDependency
@@ -285,7 +294,7 @@ Finally, I analyze the dependency graph and remove mutation(this function is pre
     }
 ```
 
-That's really all there is. As of right now I can't post the entire source of my tool because I'm using it for analyzing a commercial application, but I may post a cleaned up version at some point. Here are a bunch of my [helper methods](https://pastebin.com/F80yR8WD) which should make the code alot easier to understand.
+That's really all there is. I can't post the entire source code of my tool due to legal considerations, but here are a bunch of my [helper methods](https://pastebin.com/F80yR8WD) which should make the code alot easier to understand.
 
 Some of the libraries I used include:
 
@@ -327,7 +336,7 @@ Deobfuscated Output:
     jle near ptr 0FFFFF80584C8F35Ch
 ```
 
-The output is 100% coorrect. Every single junk instruction got removed.
+In this case, the output is 100% correct. Every single junk instruction got removed.
 
 [Full Obfuscated Function Input](https://pastebin.com/g44XhBKU)
 
@@ -337,4 +346,4 @@ Also note there may be some messed up conditional jumps in the deobfuscated outp
 
 ## Conclusions
 
-My deobfuscator isn't perfect. I didn't really care about performance(I see the 1000 performance issues but I will get to that at a later point). Performance aside, I'm happy with the result. So far I haven't been able to find any cases where I optimized out a valid instruction. Any suggestions/criticisms are welcome!
+My deobfuscator isn't perfect. I didn't really care about performance(I see the 1000 performance issues but I will get to that at a later point). Performance aside, I'm happy with the result. So far, I haven't been able to find any cases where I optimized out a valid instruction. Any suggestions/criticisms are welcome!
