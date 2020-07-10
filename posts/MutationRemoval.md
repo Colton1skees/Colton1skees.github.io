@@ -97,30 +97,30 @@ When a human reads this, they instantly know that the first few instructions whi
 - Find the last write to R9
 - Trace backwards from that last write and check if R9 is actually used before it is overwritten.
 
-After some discussions and more thinking, I decided to try building a dependency graph for analysis. The purpose of the graph was to store information about which instructions depend on each other. The dependency graph graph stored four pieces of information for each instruction:
+After some discussions and more thinking, I decided to try building a dependency graph for analysis, which stores information about which instructions depend on each other. The dependency graph stores four pieces of information for each instruction:
 
 - A dictionary of the indexes of instructions which read it's result
 - A dictionary of the indexes of instructions which overwrote or modified it's result
 - A dictionary of the indexes of instructions which read it's written flags
 - A dictionary of the indexes of instructions which write to it's written flags
 
-The idea was that a dependency graph would provide all of the information that I needed to programmatically identify junk instructions. Here is a text representation of the dependency graph(**Note: In order to make analysis easier, I reverse the order the dependency graph so I can iterate backwards **):
+The idea was that a dependency graph would provide all of the information that I needed to programmatically identify junk instructions. Here is a text representation of the dependency graph(In order to make analysis easier, **I reverse the order the dependency graph so I can iterate backwards**):
 
 ```nasm
-0: jle near ptr 0FFFFF80584C8F35Ch - Read - Write
-1: cmp dx,0F618h - Read - Write
-2: mov r8b,1 - Read - Write
-3: stc - Read - Write
-4: test esi,84596310h - Read - Write
-5: mov r9,[0FFFFF80584BBBA00h] - Read - Write
-6: sal r9w,cl - Read - Writes: 5
-7: bt bx,0Dh - Read - Write
-8: mov [rsp+20h],rsi - Read - Write
-9: inc r9d - Reads: 6 - Writes: 6 : 5
-10: mov [rsp+18h],rbp - Read - Write
-12: add r9w,0AE93h - Reads: 11 : 9 : 6 - Writes: 11 : 9 : 6 : 5
-13: mov [rsp+10h],rbx - Read - Write
-14: rol r9w,9 - Reads: 12 : 11 : 9 : 6 - Writes: 12 : 11 : 9 : 6 : 5
+0 jle near ptr 0FFFFF80584C8F35Ch - Read - Write
+1 cmp dx,0F618h - Read - Write
+2 mov r8b,1 - Read - Write
+3 stc - Read - Write
+4 test esi,84596310h - Read - Write
+5 mov r9,[0FFFFF80584BBBA00h] - Read - Write
+6 sal r9w,cl - Read - Writes: 5
+7 bt bx,0Dh - Read - Write
+8 mov [rsp+20h],rsi - Read - Write
+9 inc r9d - Reads: 6 - Writes: 6 : 5
+10 mov [rsp+18h],rbp - Read - Write
+12 add r9w,0AE93h - Reads: 11 : 9 : 6 - Writes: 11 : 9 : 6 : 5
+13 mov [rsp+10h],rbx - Read - Write
+14 rol r9w,9 - Reads: 12 : 11 : 9 : 6 - Writes: 12 : 11 : 9 : 6 : 5
 ```
 
 The output isn't the most intuitive, so I will try to explain. The numbers followed by "Reads:" are the indexes of the instructions which read the result of that instruction. The numbers followed by "Writes:" are the indexes of the instructions which write to the result of that instruction. I didn't bother including eflags dependencies in this example, because I describe a simpler eflags solution later on.
