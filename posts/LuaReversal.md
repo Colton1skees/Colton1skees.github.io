@@ -14,7 +14,7 @@ For the rest of this writeup I'm going to be using IDA Pro. This tutorial assume
 If you click on the link above in the Lua section, you'll see a list of Lua's C API Functions. They are basically just functions you can call to interact/manipulate Lua through C. The easiest way that I've found to locate specific C API function's is to just download the Lua source code and look for string references. You can find the Lua version that the program uses's by searching for the string
 `$Lua`
 
-![Branching](https://i.imgur.com/dqaqao2.png)
+![image](/assets/images/mutation.png)
 
 Once you've figured out what Lua version the program uses, download the source code and open it up in a text editor. At this point you can just use strings to locate any C API function. I'm using Lua version 5.1.1, but the process doesn't change much throughout versions.
 

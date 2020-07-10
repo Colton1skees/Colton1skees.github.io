@@ -16,23 +16,23 @@ For this writeup, I am focusing solely on the mutation.
 ## Analyzing the obfuscation
 
 Here's an example of the obfuscation:
-![Branching](https://imgur.com/a/locDGNx.png)
+![image](/assets/images/mutation.png)
 
 Right away, the following marked instructions stood out as junk:
 
 ```nasm
-    rol     r9w, 9 // junk
+    rol     r9w, 9 // JUNK
     mov     [rsp+arg_8], rbx
-    add     r9w, 0AE93h // junk
-    ror     r9w, cl // junk
+    add     r9w, 0AE93h // JUNK
+    ror     r9w, cl // JUNK
     mov     [rsp+arg_10], rbp
-    inc     r9d // junk
+    inc     r9d // JUNK
     mov     [rsp+arg_18], rsi
-    bt      bx, 0Dh // most likely junk, but noo guarantees can be made without analyzing other blocks
-    sal     r9w, cl // junk
+    bt      bx, 0Dh // most likely junk, but no guarantees can be made without analyzing other blocks
+    sal     r9w, cl // JUNK
     mov     r9, cs:qword_FFFFF80584BBBA00
-    test    esi, 84596310h // junk
-    stc  // junk
+    test    esi, 84596310h // JUNK
+    stc  // JUNK
     mov     r8b, 1
     cmp     dx, 0F618h
     jle     loc_FFFFF80584C8F35C
@@ -55,9 +55,9 @@ None of the existing binary analysis frameworks seemed like the best option, so 
 
 Once I implemented disassembly and CFG recovery, I was finally able to start working on removing the mutation. It was surprisingly more difficult than I thought. My first attempt went like this:
 
-1. grab a basic block
-2. iterate through every instruction in the basic block, and retrieve the index of the first instruction who wrote to the result, along with the first instruction who read the result. (result is referring to any of the registers written to by a given instruction)
-3. discard the instruction if the result is overwritten before it is read
+1. Grab a basic block
+2. Iterate through every instruction in the basic block, and retrieve the index of the first instruction who wrote to the result, along with the first instruction who read the result. (result is referring to any of the registers written to by a given instruction)
+3. Discard the instruction if the result is overwritten before it is read
 
 It somehow worked surprisingly well. However, it just wasn't accurate enough. Thinking back on it, there are some glaring issues. Take the following made up snippet as an example
 
@@ -70,7 +70,7 @@ It somehow worked surprisingly well. However, it just wasn't accurate enough. Th
     mov     r9, cs:qword_FFFFF80584BBBA00
 ```
 
-If you determine instruction validity based off whether or not the result is read before it is written, it is going to fail here(unless you don't count ReadWrite instructions as writes, which would just result in messed up output alot of the time). This problem bothered me for a week or two. Finally, I woke up one morning and something just clicked. Going back to the obfuscated snippet from above:
+If you determine instruction validity based off whether or not the result is read before it is written, it is going to fail here(unless you don't count ReadWrite instructions as writes, which would just result in messed up output alot of the time). This problem bothered me for a week or two, but something just clicked eventually. Going back to the obfuscated snippet from above:
 
 ```nasm
     rol     r9w, 9 // guaranteed junk
@@ -92,11 +92,11 @@ If you determine instruction validity based off whether or not the result is rea
 
 When a human reads this, they instantly know that the first few instructions which write to R9 are junk. The process most of us go through to identify junk can sortof be broken down into this:
 
-1. Look at all read/writes to R9
-2. Find the last write to R9
-3. Trace backwards from that last write and check if R9 is actually used before it is overwritten.
+- Look at all read/writes to R9
+- Find the last write to R9
+- Trace backwards from that last write and check if R9 is actually used before it is overwritten.
 
-After some more thinking, I decided to try implementing a sortof dependency graph which keeps track of which instructions depend on each other. Here is the result of the dependency graph(_Note: I reversed the dependency graph_):
+After some more thinking, I decided to try implementing a sortof dependency graph which keeps track of which instructions depend on each other. Here is the result of the dependency graph(**Note: I reversed the order of the dependency graph to make analysis easier**):
 
 ```nasm
 0: jle near ptr 0FFFFF80584C8F35Ch - Read - Write
@@ -284,7 +284,7 @@ Finally, I analyze the dependency graph and remove mutation(this function is pre
     }
 ```
 
-That's really all there is. As of right now I can't post the entire source of my tool because I'm using it for analyzing some commercial applications, but I may post a cleaned up version at some point. Here are a bunch of my helper methods which should make the code alot easier to understand - https://pastebin.com/F80yR8WD.
+That's really all there is. As of right now I can't post the entire source of my tool because I'm using it for analyzing some commercial applications, but I may post a cleaned up version at some point. Here are a bunch of my [helper methods](https://pastebin.com/F80yR8WD) which should make the code alot easier to understand.
 
 ## Output
 
