@@ -295,6 +295,8 @@ Some of the libraries I used include:
 
 ## Output
 
+Obfuscated Input
+
 ```nasm
     rol     r9w, 9 // JUNK
     mov     [rsp+arg_8], rbx
@@ -313,7 +315,7 @@ Some of the libraries I used include:
     jle     loc_FFFFF80584C8F35C
 ```
 
-The obfuscated basic block turns into:
+Deobfuscated Output:
 
 ```nasm
     mov [rsp+10h],rbx
@@ -325,7 +327,9 @@ The obfuscated basic block turns into:
     jle near ptr 0FFFFF80584C8F35Ch
 ```
 
-[Full Obfuscated Function Output](https://pastebin.com/g44XhBKU)
+The output is 100% coorrect. Every single junk instruction got removed.
+
+[Full Obfuscated Function Input](https://pastebin.com/g44XhBKU)
 
 [Full Deobfuscated Function Output](https://pastebin.com/D0s4rZQi)
 
