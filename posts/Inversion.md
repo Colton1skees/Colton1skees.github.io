@@ -29,9 +29,9 @@ f(x) = 128*x**8 + 128*x**6 - 96*x**5 + 32*x**4 + 32*x**3 + 96*x**2 - 63*x
 ```
 from z3 import *
 x = BitVec('x', 8) 
-op1 = x
-op2 = 128*x*x*x*x*x*x*x*x + 128*x*x*x*x*x*x - 96*x*x*x*x*x + 32*x*x*x*x + 32*x*x*x + 96*x*x - 63*x
-prove(op1 == op2)
+before = x
+after = 128*x*x*x*x*x*x*x*x + 128*x*x*x*x*x*x - 96*x*x*x*x*x + 32*x*x*x*x + 32*x*x*x + 96*x*x - 63*x
+prove(before == after)
 ```
 
 # Binary permutation polynomials in the context of software obfuscation
