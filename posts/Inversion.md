@@ -108,7 +108,7 @@ after constant folding and reducing the coefficients modulo 256. This leaves us 
 # Interpolation as a system of linear equations
 First note that polynomial interpolation over rings is weirder than fields. Lagrange interpolation will not work on all binary permutation polynomials because division is not well defined - but fortunately we just formulated interpolation as a system of linear equations using the steps above. Note that I am by no means the first person to touch on this [3][4].
 
-I won't go into too much detail (enough has already been written about this elsewhere). To solve the system of equations we can apply gaussian elimination - but the rules are *slightly* different modulo m.
+I won't go into too much detail about solving modular systems of linear equations(enough has already been written about this elsewhere). To solve the system of equations we can apply gaussian elimination - but the rules are *slightly* different modulo m.
 - Swapping two rows is still allowed
 - Multiplying a row by a nonzero number is *not* allowed
 - Adding a multiple of one row to another is still allowed
@@ -125,8 +125,10 @@ Applying gaussian elimination for this example yields:
 0*c6 + 0*c5 + 0*c4 + 0*c3 + 0*c2 + 196*c1 + 29*c0 == 112
 0*c6 + 0*c5 + 0*c4 + 0*c3 + 0*c2 + 0*c1 + 71*c0 == 36
 ```
+Note that the order of the operands was flipped, just because I prefer to solve for the constant offset first. 
 
-Note that the order of the operands was flipped, just because I prefer to solve for the constant offset first. Reading off a solution is a bit more involved, but not terrible. In short, you can't just pick any solution when solving the linear congruence - because there may be multiple solutions. Consider the made up example 
+
+Anyways, reading off a solution is a bit more involved, but not terrible. In short, you can't just pick any solution when solving the linear congruence - because there may be multiple solutions. Consider the made up example 
 ```
 0*c6 + 0*c5 + 0*c4 + 0*c3 + 0*c2 + 0*c1 + 32*c0 == 64
 ```
@@ -134,7 +136,7 @@ Note that the order of the operands was flipped, just because I prefer to solve 
 
 , where there are multiple solutions(146, 66) for the bottom row. One could contrive a set of rows where this is no solution if you pick the wrong one.
 
-Anyways, the solutions we read off for our example were
+You can solve this by just recursively enumerating all solutions until you find a fit. Anyways, the solutions we read off for our example were
 ```
 c0 = 188
 c1 = 153
