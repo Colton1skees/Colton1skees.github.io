@@ -2,17 +2,30 @@
 
 If you're familiar with [modular multiplicative inverses](https://en.wikipedia.org/wiki/Modular_multiplicative_inverse), you may be interested to know that this concept extends to a certain classes of binary polynomials.
 
-Consider the 8-bit polynomial `P(x) = 42*x**2 + 185*x + 132`. There exists another polynomial, `Q(x) = 24*x**4 + 40*x**3 + 102*x**2 + 153*x + 188` , that is an inverse of `P`. That is to say `Q(P(x)) == x` modulo 256. 
+Consider the 8-bit polynomial:
+```
+P(x) = 42*x**2 + 185*x + 132
+``` 
+
+There exists another polynomial, 
+
+```
+Q(x) = 24*x**4 + 40*x**3 + 102*x**2 + 153*x + 188
+```
+, that is an inverse of `P`. That is to say `Q(P(x)) == x` modulo 256. 
 
 We can verify this by substituting`P` for all instances of `x` in `Q`
 
-`f(x) = 24*(42*x**2 + 185*x + 132)**4 + 40*(42*x**2 + 185*x + 132)**3 + 102*(42*x**2 + 185*x + 132)**2 + 153*(42*x**2 + 185*x + 132) + 188`
-
+```
+f(x) = 24*(42*x**2 + 185*x + 132)**4 + 40*(42*x**2 + 185*x + 132)**3 + 102*(42*x**2 + 185*x + 132)**2 + 153*(42*x**2 + 185*x + 132) + 188
+```
 , expanding
 
-`f(x) = 128*x**8 + 128*x**6 - 96*x**5 + 32*x**4 + 32*x**3 + 96*x**2 - 63*x`.
+```
+f(x) = 128*x**8 + 128*x**6 - 96*x**5 + 32*x**4 + 32*x**3 + 96*x**2 - 63*x
+```
 
-and proving the equivalence using an SMT solver.
+, and proving the equivalence using an SMT solver.
 ```
 from z3 import *
 x = BitVec('x', 8) 
@@ -30,7 +43,7 @@ In general it is difficult for an attacker to undo this transformation. As we sa
 128*(x&y)**2*(x^y) + 128*(x&y)**2 + 64*(x&y)*(x^y)**4 - 64*(x&y)*(x^y)**2 + 128*(x&y)*(x^y) - 126*(x&y) + 128*(x^y)**8 + 128*(x^y)**6 - 96*(x^y)**5 + 32*(x^y)**4 + 32*(x^y)**3 + 96*(x^y)**2 - 63*(x^y)
 ```
 
-To break this technique, an attacker must implement [multivariate binary polynomial reduction](https://www.ndss-symposium.org/wp-content/uploads/bar2024-14-paper.pdf) *and* some algorithm for dealing with bitwise parts. Notably multivariate binary polynomial reduction was not (to the best of my knowledge) even well understood until very recently. Though the bitwise parts can be dealt with trivially. You can refer to (https://github.com/mazeworks-security/Simplifier) for implementations of both of these algorithms.
+To break this technique, an attacker must implement [multivariate binary polynomial reduction](https://www.ndss-symposium.org/wp-content/uploads/bar2024-14-paper.pdf) *and* some algorithm for dealing with bitwise parts. Notably multivariate binary polynomial reduction was not (to the best of my knowledge) even well understood until very recently. Though the bitwise parts can be dealt with trivially. You can refer to [https://github.com/mazeworks-security/Simplifier](https://github.com/mazeworks-security/Simplifier) for implementations of both of these algorithms.
 
 # Characterization of binary permutation polynomials
 A polynomial modulo a power of two is a permutation polynomial if and only if:
