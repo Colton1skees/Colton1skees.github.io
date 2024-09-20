@@ -1,6 +1,6 @@
 # Existence of binary polynomials with inverses
 
-If you're familiar with [modular multiplicative inverses](https://en.wikipedia.org/wiki/Modular_multiplicative_inverse), you may be interested to know that this concept extends to a certain classes of binary polynomials.
+If you're familiar with [modular multiplicative inverses](https://en.wikipedia.org/wiki/Modular_multiplicative_inverse), you may be interested to know that this concept extends to a certain class of binary polynomials.
 
 Consider the 8-bit polynomial:
 ```
