@@ -105,7 +105,7 @@ f(194) = 1*c0 + 194*c1 + 4*c2 + 8*c3 + 16*c4 + 32*c5 + 64*c6 = 6
 
 after constant folding and reducing the coefficients modulo 256. This leaves us with a system of linear equations to solve for.
 
-# Solving interpolation
+# Interpolation as a system of linear equations
 First note that polynomial interpolation over rings is weirder than fields. Lagrange interpolation will not work on all binary permutation polynomials because division is not well defined - but fortunately we just formulated interpolation as a system of linear equations using the steps above. Note that I am by no means the first person to touch on this [3][4].
 
 I won't go into too much detail (enough has already been written about this elsewhere). To solve the system of equations we can apply gaussian elimination - but the rules are *slightly* different modulo m.
