@@ -63,7 +63,7 @@ All binary permutations permutations have inverses. Below are some 8-bit example
 # Formulating inversion as polynomial interpolation
 There are several known methods for inverting binary permutation polynomials, but I'm only going to touch on what I think is the most intuitive approach (interpolation). Interested readers can refer to [1], [2], and [3] for other methods. 
 
-Formulating inversion as interpolation should be straight forward. Consider our example from earlier `42*x**2 + 185*x + 132`. Recall that a polynomial of degree `d` is uniquely determined by `d+1` points, and the inverse of this polynomial has a degree less than or equal to 6, so we first evaluate the polynomial on 7 points (`0 ... 7`). We can't know the degree of ahead of time, so 6 was a conservative guess.
+Formulating inversion as interpolation should be straight forward. Consider our example from earlier `42*x**2 + 185*x + 132`. Recall that a polynomial of degree `d` is uniquely determined by `d+1` points, and the inverse of this polynomial has a degree less than or equal to 6, so we first evaluate the polynomial on 7 points (`0 ... 7`). 
 
 ```
 f(0) = 132 + 185*0 + 42*0**2 = 132
@@ -79,7 +79,7 @@ We know that the inverse is of the form:
 ```
 f(x) = c0 + c1*x + c2*x**2 + c3*x**3 + c4*x**4 + c5*x**5 + c6*x**6
 ```
-, we are looking for a polynomial that and returns 0 on `f(132)`, 1 on `f(103)`, 2 on `f(158)`, so on and so forth. Plugging this information in, we must solve for
+, and we are looking for a polynomial that and returns 0 on `f(132)`, 1 on `f(103)`, 2 on `f(158)`, so on and so forth. Plugging this information in, we must solve for
 
 ```
 f(132) = c0 + c1*132 + c2*132**2 + c3*132**3 + c4*132**4 + c5*132**5 + c6*132**6 = 0
