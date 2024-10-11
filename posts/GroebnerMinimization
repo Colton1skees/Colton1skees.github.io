@@ -1,0 +1,40 @@
+# (Not finished): Notes on Gröbner Bases for Boolean Function Minimization
+
+
+
+When working on mixed boolean arithmetic (specifically linear mixed-boolean arithmetic), one needs a fast boolean minimization algorithm with good results. For linear MBAs this algorithm may need to be invoked on an exponential number of possible candidates, at least when searching for the *optimal* result. Though you can get away with invoking boolean minimization sparsely in practice, since we only need a good enough result. 
+
+Most MBA tools solve this by precomputing optimal representations for all 2^n possible boolean functions, which is only feasible for small Ns (<= 4). For boolean expressions with higher variable counts, they fall back to disjunctive normal form minimization algorithms (e.g. Quine-McCluskey, Espresso). The problem with this is that disjunctive normal form (DNF) is usually not what we want as human analysts. Consider `a^b^c^d` which is something along the lines of `(~(~a|b|c|d)|~(a|~b|c|d)|~(a|b|~c|d)|~(a|b|c|~d)|(a&b&c&~d)|(a&b&~c&d)|(a&~b&c&d)|(~a&b&c&d))` in DNF. There are many cases where disjunctive normal form is exponentially worse than the optimal result. 
+
+Some of these exponential cases can be solved e.g. by rewriting the boolean in algebraic normal form. In this case the algebraic normal form of `a^b^c^d` *is* `a^b^c^d`. Another example, `(a|b|c)^(x&y&z)` has the algebraic normal form `a ^ b ^ c ^ a&b ^ a&c ^ b&c ^ a&b&c ^ x&y&z` - which is substanstially more readable than the equivalent DNF version. Computing both DNF and ANF, then picking between the two (based on a cost function) seems to be a good compromise. But there are still cases where this is not enough. `(x0^x1^x2^x3)&(x3|(x4|x5&x6))|x7|x8|x9` is one such case. I won't include the ANF or DNF of this expression since they're very large.
+
+Fortunately a [paper was released recently](https://ceur-ws.org/Vol-3455/short4.pdf) that provides *very* close to optimal results, even on complex and high variable count expressions like the ones included above. Below are some notes from this paper that are hopefully helpful to someone.
+
+# Encoding boolean formulas as polynomial 
+Any boolean can be encoded as a polynomial in GF(2), using these identities:
+- ~x = x^1
+- x^y = x+1
+- x&y = x*y
+- x|y = ~(~x&~y) = x*y + x + y
+
+Knowing this, we can then represent a boolean truth table as a system of equations. Consider `x&y` which has the truth table:
+```
+~x&~y == 0
+x&~y => 0
+~x&y => 0
+x&y => 1
+```
+
+We can then reinterpret the truth table as a system of nonlinear equations
+```
+x*y + x + y + 1 == 0
+x*y + x == 0
+x*y + y == 0
+x*y == 1
+```
+
+The intuition behind the paper is that we can then construct a groebner basis for this system of equations, which corresponds to an empirically smaller equivalent formula. 
+
+
+# References
+1. https://ceur-ws.org/Vol-3455/short4.pdf

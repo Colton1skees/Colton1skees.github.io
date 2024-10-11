@@ -1,4 +1,4 @@
-# Existence of binary polynomials with inverses
+# Inverting binary permutation polynomials
 
 If you're familiar with [modular multiplicative inverses](https://en.wikipedia.org/wiki/Modular_multiplicative_inverse), you may be interested to know that this concept extends to a certain class of binary polynomials.
 
@@ -63,7 +63,7 @@ All binary permutations permutations have inverses. Below are some 8-bit example
 # Formulating inversion as polynomial interpolation
 There are several known methods for inverting binary permutation polynomials, but I'm only going to touch on what I think is the most intuitive approach (interpolation). Interested readers can refer to [1], [2], and [3] for other methods. 
 
-Formulating inversion as interpolation should be straight forward. Consider our example from earlier `42*x**2 + 185*x + 132`. Recall that a polynomial of degree `d` is uniquely determined by `d+1` points, and the inverse of this polynomial has a degree less than or equal to 6, so we first evaluate the polynomial on 7 points (`0 ... 7`). 
+Formulating inversion as interpolation should be straight forward. Consider our example from earlier `42*x**2 + 185*x + 132`. Recall that a polynomial of degree `d` is uniquely determined by `d+1` points. We don't know the degree of the inverse, so we arbitrarily look for a polynomial of degree 6. To do this we first evaluate the polynomial on 7 points (`0 ... 7`). 
 
 ```
 f(0) = 132 + 185*0 + 42*0**2 = 132
